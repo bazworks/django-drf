@@ -1,20 +1,16 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from rest_framework import status
+from rest_framework.response import Response
 
-# Define the API prefix as a variable
-# You can change this to 'bpi' or any other prefix you want
-API_PREFIX = getattr(settings, "API_PREFIX", "bpi")
+API_PREFIX = getattr(settings, "API_PREFIX", "api")
+print(API_PREFIX)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-]
-
-urlpatterns += [
-    path(f"{API_PREFIX}/", include("app_auth.urls")),
-    path(f"{API_PREFIX}/", include("app_files.urls")),
 ]
 
 urlpatterns += [
@@ -25,6 +21,12 @@ urlpatterns += [
         name="swagger-ui",
     ),
 ]
+
+urlpatterns += [
+    path(f"{API_PREFIX}/auth/", include("app_auth.urls")),
+    path(f"{API_PREFIX}/files/", include("app_files.urls")),
+]
+
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

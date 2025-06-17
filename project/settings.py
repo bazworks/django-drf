@@ -28,8 +28,11 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+print("SECRET_KEY:", os.getenv("SECRET_KEY"))
+
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = os.getenv("DEBUG", "True") in ["True", "true", "TRUE"]
+print("DEBUG: ", DEBUG, os.getenv("DEBUG"))
 TEMPLATE_DEBUG = DEBUG
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
@@ -71,23 +74,6 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# Add security middleware in production
-if not DEBUG:
-
-    # Production security settings
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-    # HSTS Settings
-    SECURE_HSTS_SECONDS = 31536000  # 1 year
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-
-    # Additional security headers
-    SECURE_REFERRER_POLICY = "same-origin"
-    X_FRAME_OPTIONS = "DENY"  # Prevents clickjacking
 
 ROOT_URLCONF = "project.urls"
 
@@ -191,7 +177,6 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
-    "EXCEPTION_HANDLER": "app_core.utils.custom_exception_handler",
 }
 
 # JWT settings

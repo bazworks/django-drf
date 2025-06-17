@@ -37,6 +37,8 @@ class IsSuperUser(IsAdminUser):
 
 
 class LoginView(TokenObtainPairView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
     serializer_class = LoginSerializer
 
     @extend_schema(
@@ -68,6 +70,7 @@ class LogoutView(APIView):
 
 
 class ForgotPasswordAPIView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
     serializer_class = ForgotPasswordSerializer
 
@@ -89,6 +92,7 @@ class ForgotPasswordAPIView(APIView):
 
 
 class ResetPasswordAPIView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
     serializer_class = ResetPasswordSerializer
 
@@ -111,6 +115,7 @@ class ResetPasswordAPIView(APIView):
 
 
 class RegisterView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
 
@@ -136,7 +141,8 @@ class UserView(ListCreateAPIView):
 # OTP related views
 
 
-class RequestOTPView(APIView):
+class RequestRegisterOTPView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
     serializer_class = RequestOTPSerializer
 
@@ -158,7 +164,68 @@ class RequestOTPView(APIView):
         return Response({"message": "OTP sent successfully"})
 
 
-class ValidateOTPView(APIView):
+class ValidateRegisterOTPView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    serializer_class = OTPRegisterSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = User.objects.get(email=request.data["email"])
+        if user:
+            raise ValidationError({"email": "Already registered, please login"})
+
+        # Create user
+        # If you want to store additional fields, you should create the profile model with the required fields and create the profile after user is created
+        user = User.objects.create_user(
+            username=request.data["email"],
+            email=request.data["email"],
+            first_name=request.data["first_name"],
+            last_name=request.data["last_name"],
+        )
+
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": UserSerializer(user).data,
+            }
+        )
+
+
+class RequestLoginOTPView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+    serializer_class = RequestOTPSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = request.data["email"]
+        user = User.objects.get(email=email)
+        if not user:
+            raise ValidationError({"email": "User with this email is not registered"})
+
+        otp = OTP.generate_otp(email)
+
+        # Send OTP via email
+        EmailService.send_email(
+            subject="Your OTP Code",
+            recipients=[email],
+            template_name="emails/otp.html",
+            context={"otp": otp},
+        )
+
+        return Response({"message": "OTP sent successfully"})
+
+
+class ValidateLoginOTPView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
     serializer_class = ValidateOTPSerializer
 
@@ -185,31 +252,3 @@ class ValidateOTPView(APIView):
             )
         except User.DoesNotExist:
             return Response({"message": "OTP validated successfully"})
-
-
-class OTPRegisterView(APIView):
-    permission_classes = [AllowAny]
-    serializer_class = OTPRegisterSerializer
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        # Create user
-        # If you want to store additional fields, you should create the profile model with the required fields and create the profile after user is created
-        user = User.objects.create_user(
-            username=request.data["email"],
-            email=request.data["email"],
-            first_name=request.data["first_name"],
-            last_name=request.data["last_name"],
-        )
-
-        # Generate JWT tokens
-        refresh = RefreshToken.for_user(user)
-        return Response(
-            {
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-                "user": UserSerializer(user).data,
-            }
-        )

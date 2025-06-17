@@ -5,11 +5,12 @@ from .views import (
     ForgotPasswordAPIView,
     LoginView,
     LogoutView,
-    OTPRegisterView,
     RegisterView,
-    RequestOTPView,
+    RequestLoginOTPView,
+    RequestRegisterOTPView,
     ResetPasswordAPIView,
-    ValidateOTPView,
+    ValidateLoginOTPView,
+    ValidateRegisterOTPView,
 )
 
 # Auth related URLs
@@ -22,7 +23,12 @@ urlpatterns = [
     path("forgot-password/", ForgotPasswordAPIView.as_view(), name="forgot-password"),
     path("reset-password/", ResetPasswordAPIView.as_view(), name="reset-password"),
     # for OTP based login/register
-    path("request-otp/", RequestOTPView.as_view(), name="request-otp"),
-    path("validate-otp/", ValidateOTPView.as_view(), name="validate-otp"),
-    path("register-otp/", OTPRegisterView.as_view(), name="register-otp"),
+    path("request/login/otp/", RequestLoginOTPView.as_view(), name="request-login-otp"),
+    path("login/otp/", ValidateLoginOTPView.as_view(), name="validate-login-otp"),
+    path(
+        "request/register/otp/",
+        RequestRegisterOTPView.as_view(),
+        name="request-register-otp",
+    ),
+    path("register/otp/", ValidateRegisterOTPView.as_view(), name="register-otp"),
 ]
